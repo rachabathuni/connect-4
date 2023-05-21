@@ -2,12 +2,14 @@ import sys
 import random
 import connect4
 
+
 def get_rand_col(board):
     cols = []
     for c in range(board.columns):
         if not board.is_column_full(c):
             cols.append(c)
     return cols[random.randint(0, len(cols)-1)]
+
 
 board = connect4.Board()
 history = connect4.BoardHistory()

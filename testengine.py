@@ -8,7 +8,9 @@ def test_moves(moves):
 
     eng = connect4.Connect4Engine(board)
     m = eng.get_best_move()
-    board.play_check_win(m)
+    ret = board.play(m)
+    if ret != connect4.SUCCESS:
+        print("Failed to make move")
     board.print_board()
 
 

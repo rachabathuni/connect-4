@@ -23,7 +23,11 @@ def play(board):
                 print("Invalid entry")
                 continue
 
-        ret = board.play_check_win(col)
+        ret = board.play()
+        if ret != connect4.SUCCESS:
+            print("Failed to make move")
+            return
+        ret = board.check_win()
         board.print_board()
         if ret == connect4.WIN_FOUND:
             print(f"Player {connect4.PLAYER_TEXT[player]} won!")

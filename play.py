@@ -18,8 +18,11 @@ while True:
         except ValueError:
             print("Invalid entry")
             continue
-
-    ret = board.play_check_win(col)
+    ret = board.play(col)
+    if ret != connect4.SUCCESS:
+        print("Failed to make move")
+        sys.exit(0)
+    ret = board.check_win()
     board.print_board()
     if ret == connect4.WIN_FOUND:
         print("User won!")
@@ -32,7 +35,11 @@ while True:
     print("Thinking...")
     eng = connect4.Connect4Engine(board)
     move = eng.get_best_move()
-    ret = board.play_check_win(move)
+    ret = board.play(move)
+    if ret != connect4.SUCCESS:
+        print("Failed to make move")
+        sys.exit(0)
+    ret = board.check_win()
     board.print_board()
     if ret == connect4.WIN_FOUND:
         print("Computer won!")

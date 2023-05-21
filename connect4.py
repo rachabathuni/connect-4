@@ -131,11 +131,6 @@ class Board:
 
         seq = 0
         for i in range(self.chips_in_column[column]):
-            '''
-            if self.chips_in_column[i] - i + seq < self.towin:
-                return WIN_NOT_FOUND
-            '''
-
             if self.board[i][column] == player:
                 seq += 1
                 if seq == self.towin:
@@ -148,10 +143,6 @@ class Board:
         seq = 0
         row = self.chips_in_column[column] - 1
         for c in range(self.columns):
-            '''
-            if self.columns - c + seq < self.towin:
-                return WIN_NOT_FOUND
-            '''
             if self.board[row][c] == player:
                 seq += 1
                 if seq == self.towin:
@@ -185,11 +176,9 @@ class Board:
     def get_last_player(self):
         return PLAYER_2 if self.next_player == PLAYER_1 else PLAYER_1
 
-    def play_check_win(self, column):
-        player = self.next_player
-        p = self.play(column)
-        if p != SUCCESS:
-            return p
+    def check_win(self):
+        player = self.get_last_player()
+        column = self.move_stack[-1]
         if self._check_column_win(player, column) == WIN_FOUND:
             return WIN_FOUND
 
@@ -214,8 +203,12 @@ class Board:
         return True
 
     def forward(self, moves):
+        ret = None
         for m in moves:
-            ret = self.play_check_win(m)
+            ret = self.play(m)
+            if ret != SUCCESS:
+                return ret
+            ret = self.check_win()
             if ret != WIN_NOT_FOUND:
                 break
         return ret
@@ -264,7 +257,11 @@ class Connect4Engine:
     def _get_weight(self, board: Board, column: int,
                     depth: int, max_depth: int, player_multiplier: int) -> int:
         player = board.next_player
-        ret = board.play_check_win(column)
+        ret = board.play(column)
+        if ret != SUCCESS:
+            return 0
+
+        ret = board.check_win()
         self.iter_count += 1
         if ret == WIN_FOUND:
             weight = (max_depth - depth + 1) 
