@@ -19,8 +19,8 @@ ERR_COLUMN_FULL = 1
 ERR_INVALID_ROW = 2
 ERR_INVALID_COLUMN = 3
 ERR_STACK_EMPTY = 4
-WIN_FOUND = 5
-WIN_NOT_FOUND = 6
+ERR_NO_MOVES_ALLOWED = 5
+
 
 MAX_DEPTH = TO_WIN + 3
 MIN_WEIGHT = -100000
@@ -126,49 +126,59 @@ class Board:
         return SUCCESS
 
     def _check_column_win(self, player, column):
+        return self._check_column_seq(player, column, self.towin)
+
+    def _check_column_seq(self, player, column, target_seq):
         if self.chips_in_column[column] < self.towin:
-            return WIN_NOT_FOUND
+            return False
 
         seq = 0
         for i in range(self.chips_in_column[column]):
             if self.board[i][column] == player:
                 seq += 1
-                if seq == self.towin:
-                    return WIN_FOUND
+                if seq == target_seq:
+                    return True
             else:
                 seq = 0
-        return WIN_NOT_FOUND
+        return False
 
     def _check_row_win(self, player, column):
+        return self._check_row_seq(player, column, self.towin)
+
+    def _check_row_seq(self, player, column, target_seq):
         seq = 0
         row = self.chips_in_column[column] - 1
         for c in range(self.columns):
             if self.board[row][c] == player:
                 seq += 1
-                if seq == self.towin:
-                    return WIN_FOUND
+                if seq == target_seq:
+                    return True
             else:
                 seq = 0
-        return WIN_NOT_FOUND
+        return False
 
-    def _check_one_diag(self, player, diag, row, column):
+    def _check_one_diag(self, player, diag, row, column, target_seq):
         if diag[row][column]:
             seq = 0
             for point in diag[row][column]:
                 if self.board[point[0]][point[1]] == player:
                     seq += 1
-                    if seq == self.towin:
-                        return WIN_FOUND
+                    if seq == target_seq:
+                        return True
                 else:
                     seq = 0
+        return False
 
     def _check_diag_win(self, player, column):
+        return self._check_diag_seq(player, column, self.towin)
+
+    def _check_diag_seq(self, player, column, target_seq):
         row = self.chips_in_column[column]-1
-        if self._check_one_diag(player, self.positive_diag, row, column) == WIN_FOUND:
-            return WIN_FOUND
-        if self._check_one_diag(player, self.negative_diag, row, column) == WIN_FOUND:
-            return WIN_FOUND
-        return WIN_NOT_FOUND
+        if self._check_one_diag(player, self.positive_diag, row, column, target_seq):
+            return True
+        if self._check_one_diag(player, self.negative_diag, row, column, target_seq):
+            return True
+        return False
 
     def _flip_player(self):
         self.next_player = PLAYER_2 if self.next_player == PLAYER_1 else PLAYER_1
@@ -179,16 +189,30 @@ class Board:
     def check_win(self):
         player = self.get_last_player()
         column = self.move_stack[-1]
-        if self._check_column_win(player, column) == WIN_FOUND:
-            return WIN_FOUND
+        if self._check_column_win(player, column):
+            return True
 
-        if self._check_row_win(player, column) == WIN_FOUND:
-            return WIN_FOUND
+        if self._check_row_win(player, column):
+            return True
 
-        if self._check_diag_win(player, column) == WIN_FOUND:
-            return WIN_FOUND
+        if self._check_diag_win(player, column):
+            return True
 
-        return WIN_NOT_FOUND
+        return False
+
+    def check_win_in_one(self):
+        player = self.get_last_player()
+        column = self.move_stack[-1]
+        if self._check_column_seq(player, column, self.towin-1):
+            return True
+
+        if self._check_row_seq(player, column, self.towin-1):
+            return True
+
+        if self._check_diag_seq(player, column, self.towin-1):
+            return True
+
+        return False
 
     def get_chips_in_column(self, column):
         return self.chips_in_column[column]
@@ -209,7 +233,8 @@ class Board:
             if ret != SUCCESS:
                 return ret
             ret = self.check_win()
-            if ret != WIN_NOT_FOUND:
+            if ret:
+                ret = ERR_NO_MOVES_ALLOWED
                 break
         return ret
 
@@ -263,7 +288,7 @@ class Connect4Engine:
 
         ret = board.check_win()
         self.iter_count += 1
-        if ret == WIN_FOUND:
+        if ret:
             weight = (max_depth - depth + 1) 
             debug(f"IN: get_weight: player: {PLAYER_TEXT[player]}, col: {column}, depth: {depth}, pm: {player_multiplier}")
             board.print_board(outstream=sys.stderr)

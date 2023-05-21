@@ -17,12 +17,11 @@ while True:
     if ret != connect4.SUCCESS:
         print("Failed to make move")
         break
-    ret = board.check_win()
     board.print_board()
     print("Move stack:")
     print(board.move_stack)
 
-    if ret == connect4.WIN_FOUND:
+    if board.check_win():
         print(f"{connect4.PLAYER_TEXT[board.get_last_player()]} won")
         break
     if board.is_full():
