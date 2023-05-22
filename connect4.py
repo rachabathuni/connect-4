@@ -279,6 +279,7 @@ class Connect4Engine:
                 return i-1
         return 100
 
+
     def _get_weight(self, board: Board, column: int,
                     depth: int, max_depth: int, player_multiplier: int) -> int:
         player = board.next_player
@@ -286,19 +287,19 @@ class Connect4Engine:
         if ret != SUCCESS:
             return 0
 
+        weight = self._get_position_weight(board, depth, max_depth, player_multiplier)
+
+        board.undo()
+        return weight
+
+    def _get_position_weight(self, board, depth, max_depth, player_multiplier):
         ret = board.check_win()
         self.iter_count += 1
         if ret:
             weight = (max_depth - depth + 1) 
-            debug(f"IN: get_weight: player: {PLAYER_TEXT[player]}, col: {column}, depth: {depth}, pm: {player_multiplier}")
-            board.print_board(outstream=sys.stderr)
-            debug(f"OUT: val: {weight},  get_weight: player: {PLAYER_TEXT[player]}, col: {column}, depth: {depth}, pm: {player_multiplier}")
-            debug("-------------------")
-            board.undo()
             return weight
 
         if depth == max_depth:
-            board.undo()
             return 0
 
         moves = []
@@ -307,19 +308,9 @@ class Connect4Engine:
                 moves.append(self._get_weight(board, i, depth+1,max_depth, 1))
 
         if len(moves) == 0:
-            board.undo()
             return 0
 
-        ret = max(moves) * (-1) * player_multiplier
-
-        debug(f"IN: get_weight: player: {PLAYER_TEXT[player]}, col: {column}, depth: {depth}, pm: {player_multiplier}")
-        board.print_board(outstream=sys.stderr)
-        debug(f"moves: {moves}")
-        debug(f"OUT: val: {ret},  get_weight: player: {PLAYER_TEXT[player]}, col: {column}, depth: {depth}, pm: {player_multiplier}")
-        debug("-------------------")
-
-        board.undo()
-        return ret
+        return max(moves) * (-1) * player_multiplier
 
     def _find_best_move(self, board, max_depth):
         next_moves = [x for x in range(0, board.columns)]
