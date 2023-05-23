@@ -305,7 +305,7 @@ class Connect4Engine:
         moves = []
         for i in range(board.columns):
             if not board.is_column_full(i):
-                moves.append(self._get_weight(board, i, depth+1,max_depth, 1))
+                moves.append(self._get_weight(board, i, depth+1, max_depth, 1))
 
         if len(moves) == 0:
             return 0
