@@ -7,10 +7,14 @@ def test_moves(moves):
     board.print_board()
 
     eng = connect4.Connect4Engine(board)
-    m = eng.get_best_move()
-    ret = board.play(m)
+    err, move = eng.get_best_move()
+    if err != connect4.SUCCESS:
+        print("failed to get best move")
+        return
+    ret = board.play(move)
     if ret != connect4.SUCCESS:
         print("Failed to make move")
+        return
     board.print_board()
 
 
@@ -20,13 +24,13 @@ def test01():
 
 
 def test03():
-    moves = [3, 0, 0, 4, 5, 0, 2, 0, 3, 3, 4, 4, 4, 6]
+    moves = [3, 0, 0, 4, 5, 0, 2, 0, 3, 3, 4, 4, 4, 6, 1]
     test_moves(moves)
 
 
 def test02():
-    moves = [3, 3, 4]
+    moves = [0, 6, 0, 5, 0, 4]
     test_moves(moves)
 
 
-test03()
+test02()

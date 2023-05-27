@@ -12,7 +12,9 @@ while True:
         break
 
     eng = connect4.Connect4Engine(board)
-    move = eng.get_best_move()
+    err, move = eng.get_best_move()
+    if err != connect4.SUCCESS:
+        print(f"Failed to make a move. err: {err}")
     ret = board.play(move)
     if ret != connect4.SUCCESS:
         print("Failed to make move")

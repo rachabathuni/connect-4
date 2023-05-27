@@ -14,6 +14,9 @@ while True:
         userin = input("Enter column: ")
         try:
             col = int(userin.strip())
+            if col < 0 or col > 6:
+                print("Invalid column")
+                continue
             break
         except ValueError:
             print("Invalid entry")
@@ -24,7 +27,7 @@ while True:
         sys.exit(0)
     ret = board.check_win()
     board.print_board()
-    if ret == connect4.WIN_FOUND:
+    if ret:
         print("User won!")
         sys.exit(0)
 
@@ -34,14 +37,14 @@ while True:
 
     print("Thinking...")
     eng = connect4.Connect4Engine(board)
-    move = eng.get_best_move()
+    err, move = eng.get_best_move()
     ret = board.play(move)
     if ret != connect4.SUCCESS:
         print("Failed to make move")
         sys.exit(0)
     ret = board.check_win()
     board.print_board()
-    if ret == connect4.WIN_FOUND:
+    if ret:
         print("Computer won!")
         sys.exit(0)
 

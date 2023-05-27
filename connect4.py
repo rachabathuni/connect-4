@@ -22,7 +22,7 @@ ERR_STACK_EMPTY = 4
 ERR_NO_MOVES_ALLOWED = 5
 
 
-MAX_DEPTH = TO_WIN + 3
+MAX_DEPTH = TO_WIN + 2
 MIN_WEIGHT = -100000
 
 DEBUG = False
@@ -270,91 +270,53 @@ class Board:
 class Connect4Engine:
     def __init__(self, board):
         self.board = board
-        self.iter_count = 0
 
-    def _get_max_possible_depth(self, remaining_iters, moves):
-        columns = self.board.columns
-        for i in range(1, 100):
-            if moves ** i > remaining_iters:
-                return i-1
-        return 100
-
-
-    def _get_weight(self, board: Board, column: int,
-                    depth: int, max_depth: int, player_multiplier: int) -> int:
-        player = board.next_player
-        ret = board.play(column)
-        if ret != SUCCESS:
-            return 0
-
-        weight = self._get_position_weight(board, depth, max_depth, player_multiplier)
-
-        board.undo()
-        return weight
-
-    def _get_position_weight(self, board, depth, max_depth, player_multiplier):
-        ret = board.check_win()
-        self.iter_count += 1
-        if ret:
-            weight = (max_depth - depth + 1) 
-            return weight
-
-        if depth == max_depth:
-            return 0
-
+    def _get_best_move(self, cur_depth, max_depth, highest_weight):
+        # print(f"gbm: cur_depth: {cur_depth}, max_depth: {max_depth}, hw: {highest_weight}")
         moves = []
-        for i in range(board.columns):
-            if not board.is_column_full(i):
-                moves.append(self._get_weight(board, i, depth+1, max_depth, 1))
+        for i in range(self.board.columns):
+            if not self.board.is_column_full(i):
+                moves.append(i)
+        if not len(moves):
+            # Board is full
+            print("gbm: No moves allowed")
+            return ERR_NO_MOVES_ALLOWED, -1, 0
 
-        if len(moves) == 0:
-            return 0
+        random.shuffle(moves)
+        for move in moves:
+            err = self.board.play(move)
+            if err != SUCCESS:
+                print("Failed to make a move")
+                return err, -1, 0
 
-        return max(moves) * (-1) * player_multiplier
+            win = self.board.check_win()
+            self.board.undo()
+            if win:
+                return SUCCESS, move, highest_weight - cur_depth + 1
 
-    def _find_best_move(self, board, max_depth):
-        next_moves = [x for x in range(0, board.columns)]
-        remaining_iters = (board.columns ** MAX_DEPTH) * 2
-        cur_depth = 0
-        while True:
-            cur_depth += 1
-            max_possible_depth = self._get_max_possible_depth(remaining_iters, len(next_moves))
-            # print(f"cur_depth: {cur_depth}, max_pos_depth: {max_possible_depth}")
-            if cur_depth > max_possible_depth:
-                break
+        if cur_depth == max_depth:
+            return SUCCESS, moves[0], 0
 
-            moves = []
-            self.iter_count = 0
-            for i in range(len(next_moves)):
-                if not board.is_column_full(next_moves[i]):
-                    moves.append([next_moves[i], self._get_weight(board, next_moves[i], 1, cur_depth, 1)])
-            remaining_iters -= self.iter_count
-            print(f"fbm moves: {moves}, cur_depth: {cur_depth}")
+        child_max_depth = max_depth
+        best_weight = None
+        best_move = None
+        for move in moves:
+            self.board.play(move)
+            e, m, w = self._get_best_move(cur_depth+1, child_max_depth, highest_weight)
+            if cur_depth == 1:
+                self.board.print_board()
+                print(f"weight: {w}")
+                print("--------------------------------------")
+            self.board.undo()
+            if (best_weight == None) or w < best_weight:
+                best_weight = w
+                best_move = move
+                child_max_depth = highest_weight - abs(w) + 1
 
-            if len(moves) == 0:
-                # This should never happen. This means board is full.
-                return None
-
-            short_list = []
-            m = (-1 * cur_depth) - 1
-            for i in range(len(moves)):
-                if moves[i][1] > m:
-                    short_list = [moves[i][0]]
-                    m = moves[i][1]
-                elif moves[i][1] == m:
-                    short_list.append(moves[i][0])
-            print(f"fbm next_moves: {short_list}")
-            if len(short_list) == 1:
-                return short_list[0]
-            elif m != 0:
-                # If we already have weights for all moves, going deeper won't change the result
-                break
-            next_moves = short_list
-
-        return next_moves[random.randint(0, len(next_moves)-1)]
+        return SUCCESS, best_move, best_weight * -1
 
     def get_best_move(self):
-        column = self._find_best_move(self.board, MAX_DEPTH)
-        return column
+        err, move, weight = self._get_best_move(1, MAX_DEPTH, MAX_DEPTH)
+        return err, move
 
 
