@@ -22,7 +22,7 @@ ERR_STACK_EMPTY = 4
 ERR_NO_MOVES_ALLOWED = 5
 
 
-MAX_DEPTH = TO_WIN + 2
+MAX_DEPTH = TO_WIN
 MIN_WEIGHT = -100000
 
 DEBUG = False
@@ -303,11 +303,15 @@ class Connect4Engine:
         for move in moves:
             self.board.play(move)
             e, m, w = self._get_best_move(cur_depth+1, child_max_depth, highest_weight)
+            '''
             if cur_depth == 1:
+                pass
                 self.board.print_board()
                 print(f"weight: {w}")
                 print("--------------------------------------")
-            self.board.undo()
+            '''
+            if e == SUCCESS:
+                self.board.undo()
             if (best_weight == None) or w < best_weight:
                 best_weight = w
                 best_move = move
